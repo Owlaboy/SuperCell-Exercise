@@ -14,7 +14,7 @@ def read_json_file(file_name):
 
 def new_broadcast(event,targets):
     #print(event)
-    new = {"broadcast": targets, "user": event["user"], "timestamp": event["timestamp"], "values": event["values"]},
+    new = {"broadcast": targets, "user": event["user"], "timestamp": event["timestamp"], "values": event["values"]}
     return new
 
 def make_friends(event,users):
@@ -26,24 +26,21 @@ def make_friends(event,users):
     users[event["user2"]].append(event["user1"])
     return users
 
-def update_event(event,users):
-    if event["user"] in users.keys():
-        if users[event["user"]] == []:
-            return
-        #if event["values"] == : #Check how to handle this
-            return
-        broadcast = new_broadcast(event, users[event["user"]])
-        return broadcast
-
 def del_friends_event(event,users):
     if event["user1"] in users.keys():
         users[event["user1"]].remove(event["user2"])
         users[event["user2"]].remove(event["user1"])
 
-def main(file_name):
-    events = read_json_file(file_name)
-    users = {}
-    broadcasts = []
+def update_event(event,users):
+    if event["user"] not in users.keys():
+        users[event["user"]] = []        
+    broadcast = new_broadcast(event, users[event["user"]])
+    return broadcast
+
+
+def generate_broadcasts(events, users):
+    latest_timestamps = {}
+    broadcast_list = []
     for event in events:
         
         if event["type"] == "make_friends":
@@ -51,12 +48,24 @@ def main(file_name):
         
         elif event["type"] == "update":
             broadcast = update_event(event,users)
+            userlist = list(latest_timestamps.keys())
             if broadcast:
-                broadcasts.append(broadcast)
-            print(broadcast)    
+                if broadcast["user"] not in userlist or latest_timestamps[broadcast["user"]] < broadcast["timestamp"]:
+                    latest_timestamps[broadcast["user"]] = broadcast["timestamp"]
+                    if broadcast["broadcast"] != []:
+                        broadcast_list.append(broadcast)
+            
         elif event["type"] == "del_friends":
             del_friends_event(event,users)
-        
+    return broadcast_list
+
+def main(file_name):
+    events = read_json_file(file_name)
+    users = {}
+    
+    all = generate_broadcasts(events, users)
+    for i in all:
+        print(i)
         
     #print(users)
     #print(broadcasts)
