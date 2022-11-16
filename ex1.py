@@ -1,9 +1,9 @@
 import os, json, enum
 
 # Get the json values for the ex1
-def read_json_file(file_name):
+def read_json_file(file_path, file_name):
     events = []
-    with open(f"/home/pran/Desktop/supercell/SuperCell-Exercise/tests/ex1/{file_name}.txt", "r") as f:
+    with open(f"{file_path}{file_name}.txt", "r") as f:
         for row in f:
             #print(row)
             jobject = json.loads(row)
@@ -12,63 +12,85 @@ def read_json_file(file_name):
     
     return events
 
-def new_broadcast(event,targets):
-    #print(event)
-    new = {"broadcast": targets, "user": event["user"], "timestamp": event["timestamp"], "values": event["values"]}
+def make_friends_event(event,target_dict):
+    if event["user1"] not in target_dict:
+        target_dict[event["user1"]] = []
+    if event["user2"] not in target_dict:
+        target_dict[event["user2"]] = []
+    target_dict[event["user1"]].append(event["user2"])
+    target_dict[event["user2"]].append(event["user1"])
+    return target_dict
+
+def del_friends_event(event,target_dict):
+    if event["user1"] in target_dict.keys():
+        target_dict[event["user1"]].remove(event["user2"])
+        target_dict[event["user2"]].remove(event["user1"])
+
+def new_broadcast(event,targets,latest_timestamps):
+    if targets == []:
+        return None
+    new = {"broadcast": targets, "user": event["user"], "timestamp": event["timestamp"], "values": {}}
+    values = list(event["values"].keys())
+    for value in values:
+        if event["user"] not in latest_timestamps.keys():
+            latest_timestamps[event["user"]] = {}
+        if value not in latest_timestamps[event["user"]].keys():          
+            new["values"][value] = event["values"][value]
+            latest_timestamps[event["user"]][value] = (event["timestamp"], event["values"][value])
+        elif latest_timestamps[event["user"]][value][0] < event["timestamp"]:
+            new["values"][value] = event["values"][value]
+            latest_timestamps[event["user"]][value] = (event["timestamp"], event["values"][value])
+    if new["values"] == {}:
+        return None 
     return new
 
-def make_friends(event,users):
-    if event["user1"] not in users:
-        users[event["user1"]] = []
-    if event["user2"] not in users:
-        users[event["user2"]] = []
-    users[event["user1"]].append(event["user2"])
-    users[event["user2"]].append(event["user1"])
-    return users
+def update_event(event, target_dict, latest_timestamps):
+    if event["user"] not in target_dict.keys():
+        target_dict[event["user"]] = []        
+    targets = target_dict[event["user"]].copy()
+    broadcast = new_broadcast(event, targets, latest_timestamps)
 
-def del_friends_event(event,users):
-    if event["user1"] in users.keys():
-        users[event["user1"]].remove(event["user2"])
-        users[event["user2"]].remove(event["user1"])
-
-def update_event(event,users):
-    if event["user"] not in users.keys():
-        users[event["user"]] = []        
-    broadcast = new_broadcast(event, users[event["user"]])
     return broadcast
 
 
-def generate_broadcasts(events, users):
+def generate_broadcasts(events, target_dict):
     latest_timestamps = {}
     broadcast_list = []
     for event in events:
-        
         if event["type"] == "make_friends":
-            make_friends(event,users)
+            make_friends_event(event,target_dict)
         
-        elif event["type"] == "update":
-            broadcast = update_event(event,users)
-            userlist = list(latest_timestamps.keys())
-            if broadcast:
-                if broadcast["user"] not in userlist or latest_timestamps[broadcast["user"]] < broadcast["timestamp"]:
-                    latest_timestamps[broadcast["user"]] = broadcast["timestamp"]
-                    if broadcast["broadcast"] != []:
-                        broadcast_list.append(broadcast)
-            
         elif event["type"] == "del_friends":
-            del_friends_event(event,users)
+            del_friends_event(event,target_dict)
+        
+        # timestampValues = dict["username"] = dict[valueskey] = (timestamp, valuesvalue)
+
+        elif event["type"] == "update":
+            broadcast = update_event(event,target_dict, latest_timestamps)
+            if broadcast:
+                #if broadcast["user"] not in userlist or latest_timestamps[broadcast["user"]] < broadcast["timestamp"]:
+                broadcast_list.append(broadcast)
     return broadcast_list
 
+def generate_event_values(events):
+    newlist = []
+    for event in events:
+        timestamp_values_list = []
+        for valuekey in list(event["values"].keys()):
+            timestamp_values_list.append((event["timestamp"], event["values"][valuekey]))
+        newlist.append((event, timestamp_values_list))
+
+# timestampValues = dict["username"] = dict[valueskey] = (timestamp, valuesvalue)
+
 def main(file_name):
-    events = read_json_file(file_name)
-    users = {}
+    file_path = "/home/pran/Desktop/supercell/SuperCell-Exercise/tests/ex1/"
+    events = read_json_file(file_path, file_name)
+
+    target_dict = {}
     
-    all = generate_broadcasts(events, users)
+    all = generate_broadcasts(events, target_dict)
     for i in all:
         print(i)
-        
-    #print(users)
-    #print(broadcasts)
 
 if __name__ == "__main__":
     main("input1")
