@@ -1,13 +1,11 @@
-import os, json, enum
+import json
 
 # Get the json values for the ex1
 def read_json_file(file_path, file_name):
     events = []
     with open(f"{file_path}{file_name}.txt", "r") as f:
         for row in f:
-            #print(row)
             jobject = json.loads(row)
-            #print(type(jobject))
             events.append(jobject)
     
     return events
@@ -72,25 +70,19 @@ def generate_broadcasts(events, target_dict):
                 broadcast_list.append(broadcast)
     return broadcast_list
 
-def generate_event_values(events):
-    newlist = []
-    for event in events:
-        timestamp_values_list = []
-        for valuekey in list(event["values"].keys()):
-            timestamp_values_list.append((event["timestamp"], event["values"][valuekey]))
-        newlist.append((event, timestamp_values_list))
-
 # timestampValues = dict["username"] = dict[valueskey] = (timestamp, valuesvalue)
 
 def main(file_name):
     file_path = "/home/pran/Desktop/supercell/SuperCell-Exercise/tests/ex1/"
     events = read_json_file(file_path, file_name)
 
+    # target_dict is a dictionary with the broadcast targets for each user
     target_dict = {}
     
     all = generate_broadcasts(events, target_dict)
     for i in all:
         print(i)
+    
 
 if __name__ == "__main__":
     main("input1")

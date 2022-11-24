@@ -1,20 +1,25 @@
-import _thread as thread
 import time
 
+class MyData:
+    G = 0
 
-global count
-count = 0
+def update1(A, i):
+    threadLock.acquire()
+    for i in range(100):
+        y = A.G
+        time.sleep(0.0001)
+        A.G = y + 1
+    threadLock.release()
 
-def counter(threadId, delay):
-    global count 
-    count += 1
-    print(count)
+import threading
+threadLock = threading.Lock()
+thread_list = []
+for i in range(100):
+    x = threading.Thread(target=update1, args = (MyData, i, ))
+    x.start()
+    thread_list.append(x)
 
+for x in thread_list:
+        x.join() # wait for x to terminate.
 
-try:
-    thread.start_new_thread(counter, ("th",0))
-    thread.start_new_thread(counter, ("thread2",0))
-except:
-    print("bruh")
-    
-print(count)
+print(MyData.G)
