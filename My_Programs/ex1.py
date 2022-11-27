@@ -74,30 +74,31 @@ def generate_broadcasts(events, target_dict):
 
 # timestampValues = dict["username"] = dict[valueskey] = (timestamp, valuesvalue)
 
-def main(file_name):
-    events = read_json_file(file_name)
-
-    # target_dict is a dictionary with the broadcast targets for each user
-    target_dict = {}
-    
-    outputFileName = "ex 1 output #.log"
-    outputVersion = 1
-    while os.path.isfile(outputFileName.replace("#", str(outputVersion))):
-        outputVersion += 1
-    outputFileName = outputFileName.replace("#", str(outputVersion))
-
-    with open(outputFileName, "x") as output:
-        all = generate_broadcasts(events, target_dict)
-        for i in all:
-            output.write(str(i)+"\n")
-    
-
-if __name__ == "__main__":
+def main():
     if sys.argv[0] != "./ex1.py":
         print("The command must be the form of './ex1.py -i <input_file>'")
     
     if sys.argv[1] != "-i":
         print("The command must be the form of './ex1.py -i <input_file>'")
     else:
-        main(sys.argv[2])
+        file_name = sys.argv[2]
+
+    events = read_json_file(file_name)
+
+    # target_dict is a dictionary with the broadcast targets for each user
+    target_dict = {}
     
+    outputFileName = "ex 1 output #.txt"
+    outputVersion = 1
+    while os.path.isfile(outputFileName.replace("#", str(outputVersion))):
+        outputVersion += 1
+    outputFileName = outputFileName.replace("#", str(outputVersion))
+
+    with open(outputFileName, "w") as output:
+        all = generate_broadcasts(events, target_dict)
+        for i in all:
+            output.write(str(i)+"\n")
+    
+
+if __name__ == "__main__":
+    main()

@@ -46,6 +46,14 @@ def threadtarget(UserData, event):
     update_event(event, UserData.userstatus, UserData.usertimestamps)
 
 
+if sys.argv[0] != "./ex2.py":
+    print("The command must be the form of './ex2.py -i <input_file>'")
+
+if sys.argv[1] != "-i":
+    print("The command must be the form of './ex2.py -i <input_file>'")
+else:
+    file_name = sys.argv[2]
+
 
 events = read_json_file(sys.argv[2])
 threadLock = threading.Lock()
@@ -59,12 +67,12 @@ for event in events:
 for thread in thread_list:
     thread.join()
 
-outputFileName = "ex2 output #.log"
+outputFileName = "ex2 output #.txt"
 outputVersion = 1
 while os.path.isfile(outputFileName.replace("#", str(outputVersion))):
     outputVersion += 1
 outputFileName = outputFileName.replace("#", str(outputVersion))
 
 
-with open(outputFileName, "x") as output:
+with open(outputFileName, "w") as output:
     output.write(json.dumps(UserData.userstatus, indent=2))
