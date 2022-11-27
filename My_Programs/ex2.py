@@ -12,9 +12,9 @@ class UserData:
     # userstatus = {"user1": {"statusKey": statusValue, "StatusKey": StatusValue}}
 
 
-def read_json_file(file_path, file_name):
+def read_json_file(file_path):
     events = []
-    with open(f"{file_path}{file_name}.txt", "r") as f:
+    with open(f"{file_path}", "r") as f:
         for row in f:
             jobject = json.loads(row)
             events.append(jobject)
@@ -22,39 +22,32 @@ def read_json_file(file_path, file_name):
     return events
 
 def update_event(event, userstatus, latest_timestamps):
+    threadLock.acquire()
     if event["user"] not in userstatus.keys():
-        threadLock.acquire()
-        if event["user"] not in userstatus.keys():
-            userstatus[event["user"]] = {}  
-            latest_timestamps[event["user"]] = {}      
-            threadLock.release()
-        else:
-            threadLock.release()
+        userstatus[event["user"]] = {}  
+        latest_timestamps[event["user"]] = {}      
+    threadLock.release()
 
     update_userstatus(event, userstatus, latest_timestamps)
 
 def update_userstatus(event, userstatus, latest_timestamps):
     values = list(event["values"].keys())
     for value in values:
-        if value not in latest_timestamps[event["user"]].keys(): 
-            threadLock.acquire()
-            if value not in latest_timestamps[event["user"]].keys():          
-                userstatus[event["user"]][value] = event["values"][value]
-                latest_timestamps[event["user"]][value] = (event["timestamp"], event["values"][value])
-                threadLock.release()
-        elif latest_timestamps[event["user"]][value][0] < event["timestamp"]:
-            threadLock.acquire()
-            if latest_timestamps[event["user"]][value][0] < event["timestamp"]:
-                userstatus[event["user"]][value] = event["values"][value]
-                latest_timestamps[event["user"]][value] = (event["timestamp"], event["values"][value])
-            threadLock.release()
+        threadLock.acquire()
+        if value not in latest_timestamps[event["user"]].keys():          
+            userstatus[event["user"]][value] = event["values"][value]
+            latest_timestamps[event["user"]][value] = (event["timestamp"], event["values"][value])
+        if latest_timestamps[event["user"]][value][0] < event["timestamp"]:
+            userstatus[event["user"]][value] = event["values"][value]
+            latest_timestamps[event["user"]][value] = (event["timestamp"], event["values"][value])
+        threadLock.release()
 
 def threadtarget(UserData, event):
     update_event(event, UserData.userstatus, UserData.usertimestamps)
 
 
-path = "/home/pran/Desktop/supercell/SuperCell-Exercise/tests/ex2/"
-events = read_json_file(path,"input1")
+
+events = read_json_file(sys.argv[2])
 threadLock = threading.Lock()
 
 thread_list = []
@@ -75,7 +68,3 @@ outputFileName = outputFileName.replace("#", str(outputVersion))
 
 with open(outputFileName, "x") as output:
     output.write(json.dumps(UserData.userstatus, indent=2))
-
-
-print(UserData.userstatus)
-
