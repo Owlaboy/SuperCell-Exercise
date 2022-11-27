@@ -1,5 +1,7 @@
 #! /usr/bin/python3
 
+import sys
+import os
 import json
 import threading
 
@@ -63,6 +65,17 @@ for event in events:
 
 for thread in thread_list:
     thread.join()
+
+outputFileName = "ex2 output #.log"
+outputVersion = 1
+while os.path.isfile(outputFileName.replace("#", str(outputVersion))):
+    outputVersion += 1
+outputFileName = outputFileName.replace("#", str(outputVersion))
+
+
+with open(outputFileName, "x") as output:
+    output.write(json.dumps(UserData.userstatus, indent=2))
+
 
 print(UserData.userstatus)
 
